@@ -166,7 +166,7 @@ const MovieGuessingGame = ()=>{
             setGameOver(true);
         } else {
             revealRandomLetter(); // Add this line
-            if (newHistory.length >= 6) {
+            if (newHistory.length >= currentMovie.length) {
                 setGameOver(true);
             }
         }
@@ -358,7 +358,8 @@ const MovieGuessingGame = ()=>{
                     children: [
                         "Attempts: ",
                         guessHistory.length,
-                        "/10"
+                        "/",
+                        currentMovie.length
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/MovieGuessingGame.tsx",
