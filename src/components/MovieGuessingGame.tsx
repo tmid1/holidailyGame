@@ -20,6 +20,8 @@ const MovieGuessingGame = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [revealedLetters, setRevealedLetters] = useState<{[key: number]: string}>({}); // Add this state
+
 
   // First useEffect for loading data
   useEffect(() => {
@@ -72,6 +74,25 @@ const MovieGuessingGame = () => {
     setCurrentGuess(newGuess);
   };
 
+  const revealRandomLetter = () => {
+    // Get indices of unrevealed letters
+    const unrevealedIndices = [...currentMovie].reduce((indices: number[], char, index) => {
+      if (!revealedLetters[index] && char !== ' ') {
+        indices.push(index);
+      }
+      return indices;
+    }, []);
+
+    // If there are unrevealed letters, reveal a random one
+    if (unrevealedIndices.length > 0) {
+      const randomIndex = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
+      setRevealedLetters(prev => ({
+        ...prev,
+        [randomIndex]: currentMovie[randomIndex]
+      }));
+    }
+  };
+
   const checkGuess = () => {
     const guess = currentGuess.join('');
     const newHistory = [...guessHistory, currentGuess];
@@ -80,8 +101,11 @@ const MovieGuessingGame = () => {
     if (guess === currentMovie) {
       setGameWon(true);
       setGameOver(true);
-    } else if (newHistory.length >= 10) {
-      setGameOver(true);
+    } else {
+      revealRandomLetter(); // Add this line
+      if (newHistory.length >= 6) {
+        setGameOver(true);
+      }
     }
     
     setCurrentGuess(Array(currentMovie.length).fill(''));
@@ -89,16 +113,49 @@ const MovieGuessingGame = () => {
   };
 
   const resetGame = () => {
-    if (movieTitles.length > 0) {
-      const randomMovie = movieTitles[Math.floor(Math.random() * movieTitles.length)];
-      setCurrentMovie(randomMovie);
-      setCurrentGuess(Array(randomMovie.length).fill(''));
-      setGuessHistory([]);
-      setGameWon(false);
-      setGameOver(false);
-      setInputValue('');
-    }
+    const randomMovie = movieTitles[Math.floor(Math.random() * movieTitles.length)];
+    setCurrentMovie(randomMovie);
+    setCurrentGuess(Array(randomMovie.length).fill(''));
+    setGuessHistory([]);
+    setGameWon(false);
+    setGameOver(false);
+    setInputValue('');
+    setRevealedLetters({}); // Reset revealed letters
   };
+
+  // Update the GuessRow component to show revealed letters
+  const GuessRow = ({ guess, isCurrentGuess = false }: { guess: string[], isCurrentGuess?: boolean }) => (
+    <div className="flex flex-wrap justify-center gap-1 mb-2">
+      {guess.map((letter, index) => {
+        const isCorrect = !isCurrentGuess && letter === currentMovie[index];
+        const isWrong = !isCurrentGuess && letter && letter !== currentMovie[index];
+        const isRevealed = revealedLetters[index];
+        
+        return (
+          <div
+            key={index}
+            className={`
+              relative flex items-center justify-center 
+              ${getBoxStyles(currentMovie.length)}
+              border-2 
+              ${index % 2 === 0 ? 'border-red-500' : 'border-green-500'}
+              ${isCorrect ? 'bg-green-100' : isWrong ? 'bg-red-100' : 'bg-white'}
+              rounded
+            `}
+          >
+            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-bold text-black">
+              {isCurrentGuess && isRevealed ? revealedLetters[index] : letter || ''}
+            </span>
+            {/* {!isCurrentGuess && isRevealed && (
+              <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-bold text-blue-500">
+                {revealedLetters[index]}
+              </span>
+            )} */}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   const getBoxStyles = (movieLength: number) => {
     if (movieLength <= 4) return 'h-16 w-16 text-2xl';
@@ -177,33 +234,6 @@ const MovieGuessingGame = () => {
       </div>
     );
   };
-
-  const GuessRow = ({ guess, isCurrentGuess = false }: { guess: string[], isCurrentGuess?: boolean }) => (
-    <div className="flex flex-wrap justify-center gap-1 mb-2">
-      {guess.map((letter, index) => {
-        const isCorrect = !isCurrentGuess && letter === currentMovie[index];
-        const isWrong = !isCurrentGuess && letter && letter !== currentMovie[index];
-        
-        return (
-          <div
-            key={index}
-            className={`
-              relative flex items-center justify-center 
-              ${getBoxStyles(currentMovie.length)}
-              border-2 
-              ${index % 2 === 0 ? 'border-red-500' : 'border-green-500'}
-              ${isCorrect ? 'bg-green-100' : isWrong ? 'bg-red-100' : 'bg-white'}
-              rounded
-            `}
-          >
-            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-bold text-black">
-              {letter || ''}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
 
   return (
     <div className="min-h-screen flex items-center justify-center -mt-20" style={{ backgroundColor: '#fffaeb'}}>
