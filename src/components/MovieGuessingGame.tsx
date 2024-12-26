@@ -103,7 +103,7 @@ const MovieGuessingGame = () => {
       setGameOver(true);
     } else {
       revealRandomLetter(); // Add this line
-      if (newHistory.length >= 6) {
+      if (newHistory.length >= currentMovie.length) {
         setGameOver(true);
       }
     }
@@ -229,7 +229,7 @@ const MovieGuessingGame = () => {
         )}
 
         <div className="text-black">
-          Attempts: {guessHistory.length}/10
+          Attempts: {guessHistory.length}/{currentMovie.length}
         </div>
       </div>
     );
